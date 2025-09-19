@@ -27,6 +27,23 @@ if (!isset($rawClick)) {
 			rel="stylesheet"
 		/>
 
+		<style>
+			/* Wheel spinner minimal styles */
+			.spin-wrapper { text-align: center; margin: 20px auto; }
+			.wheel-wrarpper.hide { display: none !important; }
+			.form-container { display: none; }
+			.form-container.show { display: block; }
+			.wheel { position: relative; width: 380px; max-width: 90vw; margin: 0 auto; }
+			.wheel-img { display: block; max-width: 100%; height: auto; }
+			.wheel-cursor { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; text-align: center; }
+			.cursor-text { display: inline-block; background: #c92f54; color: #fff; padding: 10px 20px; border-radius: 4px; cursor: pointer; user-select: none; }
+			.wheel-cursor.rotat .cursor-text { animation: pulse 1s infinite; }
+			@keyframes pulse { 50% { transform: scale(1.05); } }
+			.wheel-img.super-rotation { animation: super-rotation 7.5s ease-out forwards; }
+			.wheel-img.super-rotation16 { animation: super-rotation16 7.5s ease-out forwards; }
+			@keyframes super-rotation { from { transform: rotate(0deg); } to { transform: rotate(1780deg); } }
+			@keyframes super-rotation16 { from { transform: rotate(0deg); } to { transform: rotate(1920deg); } }
+		</style>
 	</head>
 
 	<body>
@@ -265,12 +282,24 @@ if (!isset($rawClick)) {
 
 												<div id="roll"></div>
 
-												<center>
-													<center>
-														<center>
-															<br />
-															<div id="roulette"></div>
-															<div class="order_block" style="display: block">
+								<center>
+									<center>
+										<center>
+											<br />
+											<div id="roulette">
+												<div class="spin-wrapper">
+													<div class="wheel-wrarpper">
+														<div class="wheel">
+															<img alt="" class="wheel-img" src="prizewheel.png" onerror="this.src='product.png'">
+															<div class="wheel-cursor">
+																<img alt="" src="wheel-cursor.png" onerror="this.style.display='none'" style="margin: 0;"><span class="cursor-text lt48" onclick="spin(8)">Spin</span>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="form-container">
+												<div class="order_block" style="display: block">
 																<div
 																	id="test_form_1"
 																	style="
@@ -383,6 +412,7 @@ if (!isset($rawClick)) {
 																		</div>
 																	</div>
 																</div>
+															</div>
 															</div>
 															<div
 																class="spin-result-wrapper"
@@ -699,6 +729,35 @@ if (!isset($rawClick)) {
 ></script>
 
 <script src="back.js"></script>
+<script src="spin.js"></script>
+<script>
+  // expose spin globally (for inline onclick) and define start_timer used by script
+  (function(){
+    if (typeof window.spin !== 'function' && typeof spin === 'function') {
+      window.spin = spin;
+    }
+    // simple 10 minute countdown targeting .alx-timer .minutes/.seconds
+    window.start_timer = window.start_timer || function start_timer() {
+      var minutesEl = document.querySelector('.alx-timer .minutes');
+      var secondsEl = document.querySelector('.alx-timer .seconds');
+      // fallback to ids if present
+      if (!minutesEl) minutesEl = document.getElementById('min');
+      if (!secondsEl) secondsEl = document.getElementById('sec');
+      var total = 10 * 60; // 10 minutes
+      function tick(){
+        var m = Math.floor(total / 60);
+        var s = total % 60;
+        if (minutesEl) minutesEl.textContent = String(m).padStart(2,'0');
+        if (secondsEl) secondsEl.textContent = String(s).padStart(2,'0');
+        if (total > 0) {
+          total -= 1;
+          setTimeout(tick, 1000);
+        }
+      }
+      tick();
+    };
+  })();
+</script>
 <script>
   document.addEventListener("DOMContentLoaded", function ()
   {
