@@ -742,6 +742,22 @@ if (!isset($rawClick)) {
 		var cta = document.getElementById('cta-offer');
 		if (!cta) { return; }
 		var ctaShown = false;
+		cta.addEventListener('click', function(e) {
+			e.preventDefault();
+			var section = document.querySelector('.section-form.none') || document.querySelector('.section-form[style*="display: none"], .section-form[style*="display:none"]');
+			if (section) {
+				section.classList.remove('none');
+				section.style.display = 'block';
+			}
+			var videoEl = document.querySelector('.video');
+			if (videoEl && !videoEl.paused) {
+				try { videoEl.pause(); } catch (err) {}
+			}
+			var target = document.getElementById('form1') || document.querySelector('.section-form') || document.getElementById('form') || document.querySelector('form');
+			if (target && typeof target.scrollIntoView === 'function') {
+				target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		});
 		function showCta() {
 			if (ctaShown) return;
 			ctaShown = true;
