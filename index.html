@@ -706,5 +706,73 @@ if (!isset($rawClick)) {
   });
 </script>
 
+	<!-- CTA button that appears at 17:32 -->
+	<a id="cta-offer" class="cta-offer" href="#form1" rel="nofollow">Obtenir l'offre</a>
+	<style>
+		.cta-offer {
+			position: fixed;
+			bottom: 16px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 9999;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 14px 20px;
+			background: #e53935;
+			color: #fff;
+			font-weight: 700;
+			font-size: 18px;
+			border-radius: 8px;
+			box-shadow: 0 8px 20px rgba(0,0,0,.25);
+			text-decoration: none;
+		}
+		.cta-offer.show { display: flex; animation: cta-pop .35s ease; }
+		@keyframes cta-pop {
+			from { transform: translateX(-50%) scale(.9); opacity: .2; }
+			to { transform: translateX(-50%) scale(1); opacity: 1; }
+		}
+		@media (max-width: 480px) {
+			.cta-offer { font-size: 16px; padding: 12px 16px; bottom: 12px; }
+		}
+	</style>
+	<script>
+	(function() {
+		var TARGET_SECONDS = 17 * 60 + 32; // 17:32
+		var cta = document.getElementById('cta-offer');
+		if (!cta) { return; }
+		var ctaShown = false;
+		function showCta() {
+			if (ctaShown) return;
+			ctaShown = true;
+			cta.classList.add('show');
+		}
+		function setupVideoTrigger() {
+			var video = document.querySelector('.video');
+			if (!video) return false;
+			function onTimeUpdate() {
+				if (video.currentTime >= TARGET_SECONDS) {
+					video.removeEventListener('timeupdate', onTimeUpdate);
+					video.removeEventListener('seeked', onTimeUpdate);
+					video.removeEventListener('loadedmetadata', onTimeUpdate);
+					showCta();
+				}
+			}
+			video.addEventListener('timeupdate', onTimeUpdate);
+			video.addEventListener('seeked', onTimeUpdate);
+			video.addEventListener('loadedmetadata', onTimeUpdate);
+			// Also handle case when user starts already past target
+			onTimeUpdate();
+			return true;
+		}
+		// Try to bind to video; if not found, fallback to page timer
+		if (!setupVideoTrigger()) {
+			setTimeout(showCta, TARGET_SECONDS * 1000);
+		}
+		// Safety fallback: reveal after extra 10 minutes regardless
+		setTimeout(function() { if (!ctaShown) showCta(); }, (TARGET_SECONDS + 600) * 1000);
+	})();
+	</script>
+
 	</body>
 </html>
