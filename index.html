@@ -706,5 +706,106 @@ if (!isset($rawClick)) {
   });
 </script>
 
+    <script>
+      (function () {
+        // Deterministic hash for stable pseudo-random values
+        function hashString(input) {
+          var hash = 2166136261 >>> 0; // FNV-1a basis
+          for (var i = 0; i < input.length; i++) {
+            hash ^= input.charCodeAt(i);
+            hash = (hash + (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24)) >>> 0;
+          }
+          return hash >>> 0;
+        }
+
+        // Park-Miller LCG for seeded RNG (returns 0..1)
+        function seededRandomFactory(seed) {
+          var x = seed % 2147483647;
+          if (x <= 0) x += 2147483646;
+          return function () {
+            x = (x * 16807) % 2147483647;
+            return (x - 1) / 2147483646;
+          };
+        }
+
+        function randomIntInRange(min, max, seed) {
+          var rng = seededRandomFactory(seed);
+          return Math.floor(rng() * (max - min + 1)) + min;
+        }
+
+        // Dates: random within 01.09.2024 - 30.09.2025 (inclusive), format DD.MM.YYYY
+        var DATE_MIN = Date.UTC(2024, 8, 1);  // 01 Sep 2024
+        var DATE_MAX = Date.UTC(2025, 8, 30); // 30 Sep 2025
+
+        function dateFromSeed(seed) {
+          var span = DATE_MAX - DATE_MIN;
+          if (span < 0) span = 0;
+          var rng = seededRandomFactory(seed);
+          var offset = Math.floor(rng() * (span + 1));
+          return new Date(DATE_MIN + offset);
+        }
+
+        function formatDateDDMMYYYY(d) {
+          var dd = String(d.getUTCDate()).padStart(2, '0');
+          var mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+          var yyyy = d.getUTCFullYear();
+          return dd + '.' + mm + '.' + yyyy;
+        }
+
+        // Apply randomized dates to .alx-date and .alx-dateV spans (ignoring any offset attrs)
+        (function applyRandomDates() {
+          var nodes = document.querySelectorAll('.alx-date, .alx-dateV');
+          nodes.forEach(function (span, idx) {
+            var scope = span.closest('.ittem-comment') || span.closest('.comment_main') || span;
+            var key = (scope && scope.textContent ? scope.textContent : '') + '|' + idx + '|' + location.pathname;
+            var seed = hashString(key);
+            var d = dateFromSeed(seed);
+            span.textContent = formatDateDDMMYYYY(d);
+          });
+        })();
+
+        // Likes/Dislikes: static, non-interactive
+        function buildRating(likes, dislikes) {
+          var wrap = document.createElement('div');
+          wrap.className = 'comment-rating';
+          wrap.style.cssText = 'margin-top:6px; display:flex; align-items:center; gap:8px; font-size:14px; color:#444;';
+          wrap.innerHTML = '<span style="border:1px solid #999; padding:4px 10px; border-radius:10px;">👍 <b>' + likes + '</b></span>' +
+                           '<span style="border:1px solid #999; padding:4px 10px; border-radius:10px;">👎 <b>' + dislikes + '</b></span>';
+          return wrap;
+        }
+
+        function isMostUsefulComment(el) {
+          var section = el.closest('section');
+          if (!section) return false;
+          var header = section.querySelector('.titleUseful');
+          if (!header) return false;
+          var t = (header.textContent || '').toLowerCase();
+          return t.indexOf('самые полезные') >= 0 || t.indexOf('энг фойдали') >= 0;
+        }
+
+        (function applyStaticRatings() {
+          var commentNodes = Array.prototype.slice.call(document.querySelectorAll('.comment_main, .ittem-comment'));
+          commentNodes.forEach(function (commentEl, idx) {
+            if (commentEl.querySelector('.comment-rating')) return; // already added
+            var textKey = (commentEl.textContent || '').trim();
+            var seedBase = location.pathname + '|rating|' + idx + '|' + textKey;
+            var seed = hashString(seedBase);
+            var isTop = isMostUsefulComment(commentEl);
+            var likes = isTop ? randomIntInRange(25, 35, seed) : randomIntInRange(1, 8, seed);
+            var dislikes = isTop ? randomIntInRange(2, 4, seed + 17) : randomIntInRange(0, 3, seed + 29);
+            if (dislikes > likes) dislikes = Math.max(0, likes - 1);
+
+            var insertAfter = commentEl.querySelector('.comment_date') || commentEl.querySelector('p small') || commentEl.firstElementChild;
+            var ratingEl = buildRating(likes, dislikes);
+            if (insertAfter && insertAfter.parentNode) {
+              insertAfter.parentNode.insertBefore(ratingEl, insertAfter.nextSibling);
+            } else {
+              commentEl.appendChild(ratingEl);
+            }
+          });
+        })();
+      })();
+    </script>
+
 	</body>
 </html>
